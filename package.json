@@ -2,8 +2,5 @@
   "name": "dashboard-pt-mpg",
   "version": "1.0.0",
   "description": "Dashboard Administrasi PT Multi Patria Geoteknik",
-  "type": "module",
-  "dependencies": {
-    "@vercel/kv": "^1.0.1"
-  }
+  "type": "module"
 }

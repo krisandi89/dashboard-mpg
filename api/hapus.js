@@ -1,19 +1,7 @@
-import { kv } from '@vercel/kv';
+import { proxyToGas } from './_gasProxy.js';
 
-export default async function handler(request, response) {
-  if (request.method !== 'DELETE') return response.status(405).json({ message: 'Metode tidak diizinkan' });
-
-  try {
-    const { number, username } = request.body;
-    if (!number || !username) return response.status(400).json({ success: false, message: 'Nomor dan Username diperlukan.' });
-
-    const key = `${username}-${number}`;
-    const deleted = await kv.del(key);
-    if (deleted === 0) return response.status(404).json({ success: false, message: 'Data tidak ditemukan atau sudah dihapus.' });
-
-    return response.status(200).json({ success: true, message: 'Data berhasil dihapus.' });
-  } catch (error) {
-    console.error('Error saat menghapus:', error);
-    return response.status(500).json({ success: false, message: 'Terjadi kesalahan pada server.' });
-  }
+export default async function handler(req, res) {
+  if (req.method !== 'DELETE') return res.status(405).json({ message: 'Metode tidak diizinkan' });
+  const PAYLOAD = { action: 'hapus', type: req.body.type || req.query.type, username: req.body.username || req.query.username, id: req.body.number || req.query.number };
+  return proxyToGas(PAYLOAD, res);
 }

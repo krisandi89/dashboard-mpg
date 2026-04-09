@@ -1,37 +1,7 @@
-// /api/ambilPPU.js
-import { kv } from '@vercel/kv';
+import { proxyToGas } from './_gasProxy.js';
 
-// Fungsi utama yang akan dijalankan oleh Vercel
-export default async function handler(request, response) {
-  // Hanya izinkan metode GET untuk mengambil data
-  if (request.method !== 'GET') {
-    return response.status(405).json({ message: 'Metode tidak diizinkan' });
-  }
-
-  try {
-    // Menggunakan 'number' agar konsisten dengan panggilan dari frontend
-    const { number, username } = request.query;
-
-    if (!number || !username) {
-      return response.status(400).json({ success: false, message: 'Nomor PPU dan Username diperlukan.' });
-    }
-
-    // Buat kunci yang benar untuk mengambil data
-    const key = `${username}-${number}`;
-
-    // Ambil data dari Vercel KV berdasarkan kunci
-    const data = await kv.get(key);
-
-    // Jika data tidak ditemukan, kirim pesan error
-    if (!data) {
-      return response.status(404).json({ success: false, message: 'Data PPU tidak ditemukan.' });
-    }
-
-    // Jika data ditemukan, kirim datanya
-    return response.status(200).json({ success: true, data: data });
-
-  } catch (error) {
-    console.error('Error saat mengambil PPU:', error);
-    return response.status(500).json({ success: false, message: 'Terjadi kesalahan pada server.' });
-  }
+export default async function handler(req, res) {
+  if (req.method !== 'GET') return res.status(405).json({ message: 'Metode tidak diizinkan' });
+  const PAYLOAD = { action: 'ambil', type: 'PPU', username: req.query.username, id: req.query.number };
+  return proxyToGas(PAYLOAD, res);
 }

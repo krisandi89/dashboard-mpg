@@ -1,19 +1,7 @@
-import { kv } from '@vercel/kv';
+import { proxyToGas } from './_gasProxy.js';
 
-export default async function handler(request, response) {
-  if (request.method !== 'GET') return response.status(405).json({ message: 'Metode tidak diizinkan' });
-
-  try {
-    const { number, username } = request.query;
-    if (!number || !username) return response.status(400).json({ success: false, message: 'Nomor Surat dan Username diperlukan.' });
-
-    const key = `${username}-${number}`;
-    const data = await kv.get(key);
-    if (!data) return response.status(404).json({ success: false, message: 'Data Surat tidak ditemukan.' });
-
-    return response.status(200).json({ success: true, data: data });
-  } catch (error) {
-    console.error('Error saat mengambil Surat:', error);
-    return response.status(500).json({ success: false, message: 'Terjadi kesalahan pada server.' });
-  }
+export default async function handler(req, res) {
+  if (req.method !== 'GET') return res.status(405).json({ message: 'Metode tidak diizinkan' });
+  const PAYLOAD = { action: 'ambil', type: 'Surat', username: req.query.username, id: req.query.number };
+  return proxyToGas(PAYLOAD, res);
 }
