@@ -10,7 +10,14 @@ export async function proxyToGas(payload, response) {
         let result;
         try { result = JSON.parse(text); } catch (e) { return response.status(500).json({ success: false, message: 'GAS Error: ' + text }); }
 
-        if (result && result.success) return response.status(200).json(result);
+        if (result && result.success) {
+            // Translate data into keys for ambilSemua so frontend doesn't break.
+            if (payload.action === 'ambilSemua' && result.data) {
+                result.keys = result.data.map(item => item.key || item);
+                delete result.data;
+            }
+            return response.status(200).json(result);
+        }
         return response.status(result && result.message === 'Data tidak ditemukan.' ? 404 : 400).json(result);
     } catch (e) {
         return response.status(500).json({ success: false, message: 'Terjadi kesalahan pada proxy: ' + e.toString() });
