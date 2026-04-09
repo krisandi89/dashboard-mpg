@@ -582,7 +582,7 @@
 
                 showNotification(`Menghapus ${type.toUpperCase()}...`, 'info');
                 try {
-                    const apiPath = type === 'ppu' ? '/api/hapusPPU' : '/api/hapusRekap';
+                    const apiPath = type === 'ppu' ? '/api/hapus' : '/api/hapus';
                     const response = await fetch(apiPath, {
                         method: 'DELETE',
                         headers: { 'Content-Type': 'application/json' },
@@ -1660,7 +1660,7 @@
             window.deleteSurat = (nomorSurat) => {
                 showModal('Konfirmasi Hapus', `Hapus Surat ${nomorSurat}?`, 'confirm', async () => {
                     try {
-                        const res = await fetch('/api/hapusSurat', {
+                        const res = await fetch('/api/hapus', {
                             method: 'DELETE',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ username: localStorage.getItem('loggedInUser'), number: `SURAT-${nomorSurat}` }) // Key prepend SURAT to avoid collision? Wait, we can just save it as SURAT-xxx
