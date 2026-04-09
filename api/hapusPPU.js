@@ -2,7 +2,7 @@
 import { kv } from '@vercel/kv';
 
 // Fungsi utama untuk menangani request hapus PPU
-module.exports = async function handler(request, response) {
+export default async function handler(request, response) {
   // Hanya izinkan metode DELETE
   if (request.method !== 'DELETE') {
     return response.status(405).json({ message: 'Metode tidak diizinkan' });

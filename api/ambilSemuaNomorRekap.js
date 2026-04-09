@@ -1,7 +1,7 @@
 // /api/ambilSemuaNomorRekap.js
 import { kv } from '@vercel/kv';
 
-module.exports = async function handler(request, response) {
+export default async function handler(request, response) {
   if (request.method !== 'GET') {
     return response.status(405).json({ message: 'Metode tidak diizinkan' });
   }
