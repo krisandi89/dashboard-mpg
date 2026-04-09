@@ -1,7 +1,7 @@
 // /api/hapusRekap.js
 import { kv } from '@vercel/kv';
 
-export default async function handler(request, response) {
+module.exports = async function handler(request, response) {
   if (request.method !== 'DELETE') {
     return response.status(405).json({ message: 'Metode tidak diizinkan' });
   }

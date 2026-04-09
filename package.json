@@ -1,7 +1,7 @@
 {
-  "name": "super-app-engineer",
+  "name": "dashboard-pt-mpg",
   "version": "1.0.0",
-  "description": "Aplikasi PPU, Rekap, dan Laporan Harian untuk Engineer.",
+  "description": "Dashboard Administrasi PT Multi Patria Geoteknik",
   "dependencies": {
     "@vercel/kv": "^1.0.1"
   }

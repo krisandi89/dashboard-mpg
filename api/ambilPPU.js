@@ -2,7 +2,7 @@
 import { kv } from '@vercel/kv';
 
 // Fungsi utama yang akan dijalankan oleh Vercel
-export default async function handler(request, response) {
+module.exports = async function handler(request, response) {
   // Hanya izinkan metode GET untuk mengambil data
   if (request.method !== 'GET') {
     return response.status(405).json({ message: 'Metode tidak diizinkan' });
