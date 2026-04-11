@@ -1,4 +1,4 @@
-export const GAS_WEBAPP_URL = process.env.GAS_AUTH_URL || 'https://script.google.com/macros/s/AKfycbzqTE1olOpEB-2U-mB_EQX8nxMdDtgdwEuHYALEwOj4jsVvt5Vta2Thapa2KbNTKI0mAw/exec';
+export const GAS_WEBAPP_URL = process.env.GAS_AUTH_URL || 'https://script.google.com/macros/s/AKfycbyYVdm-XCKAbNsxpLRgMv8LyRDqnkIpNk975xVYRCG0K4KSzyO66cZLW7vR3A2QPMKCmg/exec';
 
 export async function proxyToGas(payload, response) {
     try {
