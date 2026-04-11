@@ -1703,7 +1703,8 @@
                             <td style="padding: 12px;">${s.perihal}</td>
                             <td style="padding: 12px;">${s.tujuan}</td>
                             <td style="padding: 12px; text-align: center;">${s.fileUrl ? `<a href="${s.fileUrl}" target="_blank" class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;"><i class="fas fa-external-link-alt"></i> Lihat</a>` : '-'}</td>
-                            <td style="padding: 12px; text-align: center;">
+                            <td style="padding: 12px; text-align: center; white-space: nowrap;">
+                                <button onclick="window.editSuratFile('${s.nomorSurat}')" title="Upload File Susulan" style="color: var(--primary); background: none; border: none; cursor: pointer; margin-right: 8px;"><i class="fas fa-upload"></i></button>
                                 <button onclick="window.deleteSurat('${s.nomorSurat}')" title="Hapus" style="color: var(--danger); background: none; border: none; cursor: pointer;"><i class="fas fa-trash-alt"></i></button>
                             </td>
                         `;
@@ -1756,6 +1757,69 @@
                         showNotification('Gagal hapus surat', 'error');
                     }
                 });
+            };
+
+            window.editSuratFile = (nomorSurat) => {
+                const sObj = allSuratData.find(d => d.nomorSurat === nomorSurat);
+                if(!sObj) return;
+
+                const html = `
+                    <div style="margin-bottom: 15px;">
+                        <p style="font-size: 14px; margin-bottom: 8px;">Upload file susulan untuk surat <strong>${nomorSurat}</strong>.</p>
+                        <input type="file" id="surat-edit-file" class="form-input" accept=".pdf,image/*">
+                    </div>
+                    <div style="display:flex; justify-content: flex-end; gap: 8px;">
+                        <button onclick="hideModal()" class="btn btn-secondary">Batal</button>
+                        <button onclick="window.saveSuratEditFile('${nomorSurat}')" id="surat-edit-save-btn" class="btn btn-primary">Unggah & Simpan</button>
+                    </div>
+                `;
+                showModal('Upload File Surat', html, 'alert', null);
+            };
+
+            window.saveSuratEditFile = async (nomorSurat) => {
+                const sObj = allSuratData.find(d => d.nomorSurat === nomorSurat);
+                if(!sObj) return hideModal();
+
+                const fileInput = document.getElementById('surat-edit-file');
+                if(!fileInput.files || fileInput.files.length === 0) return showNotification('Silakan pilih file dulu.', 'warning');
+                
+                const fileObj = fileInput.files[0];
+                if(fileObj.size > 4 * 1024 * 1024) return showNotification('Ukuran file terlalu besar (Maks ~4MB)', 'error');
+
+                const btn = document.getElementById('surat-edit-save-btn');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+
+                try {
+                    const base64Data = await convertFileToBase64(fileObj);
+                    const uploadRes = await fetch('/api/uploadSurat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ filename: fileObj.name, mimeType: fileObj.type, base64Data })
+                    });
+                    const uploadJson = await uploadRes.json();
+                    
+                    if(uploadJson.success && uploadJson.url) {
+                        sObj.fileUrl = uploadJson.url;
+                        const res = await fetch('/api/simpanSurat', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ username: 'GLOBAL', data: sObj })
+                        });
+                        
+                        if(res.ok) {
+                            showNotification('File surat berhasil ditambahkan!', 'success');
+                            hideModal();
+                            fetchAllSurat();
+                        } else {
+                            throw new Error('Gagal update data surat ke backend');
+                        }
+                    } else throw new Error(uploadJson.message || 'Unknown error dari GAS');
+                } catch(err) {
+                    btn.disabled = false;
+                    btn.innerHTML = 'Unggah & Simpan';
+                    showNotification('Gagal: ' + err.message, 'error');
+                }
             };
 
             formObj.addEventListener('submit', async (e) => {
