@@ -1508,16 +1508,14 @@
         <h2 style="font-size: 1.25rem; font-weight: 600; color: #343a40; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #e9ecef;">Pembuatan Nomor Surat Baru</h2>
         <form id="surat-form">
             <div style="display: grid; grid-template-columns: repeat(1, 1fr); gap: 1rem; md:grid-template-columns: repeat(2, 1fr);">
-                <div>
-                    <label for="surat-type" class="block text-sm font-medium text-gray-600 mb-1">Tipe Surat</label>
-                    <select id="surat-type" class="form-select" required>
-                        <option value="">-- Pilih --</option>
-                        <option value="PENAWARAN">Penawaran</option>
-                        <option value="INVOICE">Invoice</option>
-                        <option value="KONTRAK">Kontrak</option>
-                        <option value="PPU">PPU</option>
-                        <option value="UMUM">Umum</option>
-                    </select>
+                <div style="display: flex; align-items: flex-end; gap: 8px;">
+                    <div style="flex: 1;">
+                        <label for="surat-type" class="block text-sm font-medium text-gray-600 mb-1">Tipe Surat</label>
+                        <select id="surat-type" class="form-select" required>
+                            <option value="">-- Pilih --</option>
+                        </select>
+                    </div>
+                    <button type="button" id="surat-manage-type-btn" class="btn btn-secondary" style="margin-bottom: 2px; padding: 10px;"><i class="fas fa-cog"></i></button>
                 </div>
                 <div>
                     <label for="surat-date" class="block text-sm font-medium text-gray-600 mb-1">Tanggal</label>
@@ -1531,10 +1529,18 @@
                     <label for="surat-tujuan" class="block text-sm font-medium text-gray-600 mb-1">Tujuan / Kepada</label>
                     <input type="text" id="surat-tujuan" class="form-input" required>
                 </div>
+                <!-- FILE UPLOAD FIELD -->
+                <div class="md:col-span-2">
+                    <label for="surat-file" class="block text-sm font-medium text-gray-600 mb-1">Upload Surat (Opsional, PDF/Gambar Maks ~4MB)</label>
+                    <input type="file" id="surat-file" class="form-input" accept=".pdf,image/*">
+                </div>
             </div>
             
             <div style="margin-top: 1.5rem; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;">
-                <p style="font-size: 14px; color: var(--gray); margin-bottom: 5px;">Preview Nomor Surat Otomatis</p>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                    <p style="font-size: 14px; color: var(--gray); margin: 0;">Preview Nomor Surat Otomatis</p>
+                    <button type="button" id="surat-copy-btn" class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;"><i class="fas fa-copy"></i> Copy</button>
+                </div>
                 <h3 id="surat-preview-number" style="color: var(--primary); font-weight: bold; font-size: 20px;">[001]/MPG/[TIPE]/[BULAN]/[TAHUN]</h3>
             </div>
 
@@ -1557,6 +1563,7 @@
                         <th style="padding: 12px; font-size: 14px; font-weight: 600;">Tanggal</th>
                         <th style="padding: 12px; font-size: 14px; font-weight: 600;">Perihal</th>
                         <th style="padding: 12px; font-size: 14px; font-weight: 600;">Tujuan</th>
+                        <th style="padding: 12px; font-size: 14px; font-weight: 600; text-align: center;">File</th>
                         <th style="padding: 12px; font-size: 14px; font-weight: 600; text-align: center;">Aksi</th>
                     </tr>
                 </thead>
@@ -1578,6 +1585,70 @@
             flatpickr(dateInput, { dateFormat: "d/m/Y", locale: "id", defaultDate: "today", disableMobile: "true" });
             
             let allSuratData = [];
+            let suratTypes = ["PENAWARAN", "INVOICE", "KONTRAK", "PPU", "UMUM"];
+
+            document.getElementById('surat-copy-btn').addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(previewEl.textContent.trim());
+                    showNotification('Nomor surat berhasil dicopy!', 'success');
+                } catch(e) {
+                    showNotification('Gagal copy nomor.', 'error');
+                }
+            });
+
+            const convertFileToBase64 = (file) => new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = error => reject(error);
+                reader.readAsDataURL(file);
+            });
+
+            const renderTypesDropdown = () => {
+                const currentVal = typeInput.value;
+                typeInput.innerHTML = '<option value="">-- Pilih --</option>';
+                suratTypes.forEach(t => { typeInput.innerHTML += `<option value="${t}">${t}</option>`; });
+                typeInput.value = currentVal;
+            };
+
+            const manageTypeBtn = document.getElementById('surat-manage-type-btn');
+            manageTypeBtn.addEventListener('click', () => {
+               const html = `
+                   <div style="margin-bottom: 10px;">
+                      <ul id="surat-type-list" style="list-style: none; padding: 0; margin: 0; max-height: 150px; overflow-y: auto;">
+                         ${suratTypes.map(t => `<li style="display: flex; justify-content: space-between; padding: 5px; border-bottom: 1px solid #ddd;">${t} <button onclick="window.deleteSuratType('${t}')" style="color: red;"><i class="fas fa-trash"></i></button></li>`).join('')}
+                      </ul>
+                   </div>
+                   <div style="display:flex; gap:5px;">
+                      <input type="text" id="new-surat-type" class="form-input" placeholder="Tipe Baru">
+                      <button onclick="window.addSuratType()" class="btn btn-primary">Tambah</button>
+                   </div>
+               `;
+               showModal('Kelola Tipe Surat', html, 'alert', null);
+            });
+
+            window.deleteSuratType = async (type) => {
+                suratTypes = suratTypes.filter(t => t !== type);
+                await saveTypesToGlobal();
+                hideModal(); setTimeout(() => manageTypeBtn.click(), 300);
+            };
+
+            window.addSuratType = async () => {
+                const val = document.getElementById('new-surat-type').value.trim().toUpperCase();
+                if(val && !suratTypes.includes(val)) {
+                    suratTypes.push(val);
+                    await saveTypesToGlobal();
+                    hideModal(); setTimeout(() => manageTypeBtn.click(), 300);
+                }
+            };
+
+            const saveTypesToGlobal = async () => {
+                renderTypesDropdown();
+                await fetch('/api/simpanSurat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'GLOBAL', data: { id: 'SETTINGS_TipeSurat', types: suratTypes } })
+                });
+            };
 
             const getRomawiBulan = (monthNum) => {
                 const romawi = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
@@ -1631,6 +1702,7 @@
                             <td style="padding: 12px;">${s.date}</td>
                             <td style="padding: 12px;">${s.perihal}</td>
                             <td style="padding: 12px;">${s.tujuan}</td>
+                            <td style="padding: 12px; text-align: center;">${s.fileUrl ? `<a href="${s.fileUrl}" target="_blank" class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;"><i class="fas fa-external-link-alt"></i> Lihat</a>` : '-'}</td>
                             <td style="padding: 12px; text-align: center;">
                                 <button onclick="window.deleteSurat('${s.nomorSurat}')" title="Hapus" style="color: var(--danger); background: none; border: none; cursor: pointer;"><i class="fas fa-trash-alt"></i></button>
                             </td>
@@ -1642,15 +1714,24 @@
             searchInput.addEventListener('input', (e) => renderTable(e.target.value));
 
             const fetchAllSurat = async () => {
-                const username = localStorage.getItem('loggedInUser');
-                if(!username) return;
                 try {
-                    const res = await fetch(`/api/ambilSemuaNomorSurat?username=${username}`);
+                    const res = await fetch(`/api/ambilSemuaNomorSurat?username=GLOBAL`);
                     const json = await res.json();
                     if(json.success && json.keys) {
-                        const promises = json.keys.map(k => fetch(`/api/ambilSurat?number=${encodeURIComponent(k.replace(`${username}-`, ''))}&username=${username}`).then(r => r.json()));
+                        const promises = json.keys.map(k => fetch(`/api/ambilSurat?number=${encodeURIComponent(k.replace('GLOBAL-', ''))}&username=GLOBAL`).then(r => r.json()));
                         const allResults = await Promise.all(promises);
-                        allSuratData = allResults.map(r => r.data).filter(Boolean);
+                        const rawData = allResults.map(r => r.data).filter(Boolean);
+                        
+                        // Parse settings
+                        const settings = rawData.find(d => d.id === 'SETTINGS_TipeSurat');
+                        if (settings && settings.types) {
+                            suratTypes = settings.types;
+                        }
+                        renderTypesDropdown();
+
+                        allSuratData = rawData.filter(d => d.id !== 'SETTINGS_TipeSurat');
+                    } else {
+                        renderTypesDropdown();
                     }
                     renderTable();
                     updatePreview();
@@ -1665,7 +1746,7 @@
                         const res = await fetch('/api/hapus?type=Surat', {
                             method: 'DELETE',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ username: localStorage.getItem('loggedInUser'), number: `SURAT-${nomorSurat}` }) // Key prepend SURAT to avoid collision? Wait, we can just save it as SURAT-xxx
+                            body: JSON.stringify({ username: 'GLOBAL', number: nomorSurat })
                         });
                         if (res.ok) {
                             showNotification('Surat dihapus.', 'success');
@@ -1681,17 +1762,44 @@
                 e.preventDefault();
                 updatePreview();
                 const genNomor = previewEl.textContent;
+                const btn = document.getElementById('surat-save-btn');
                 
+                const fileInput = document.getElementById('surat-file');
+                let fileUrl = '';
+                if(fileInput.files.length > 0) {
+                    const fileObj = fileInput.files[0];
+                    if(fileObj.size > 4 * 1024 * 1024) return showNotification('Ukuran file terlalu besar (Maks ~4MB)', 'error');
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+                    try {
+                        const base64Data = await convertFileToBase64(fileObj);
+                        const uploadRes = await fetch('/api/uploadSurat', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ filename: fileObj.name, mimeType: fileObj.type, base64Data })
+                        });
+                        const uploadJson = await uploadRes.json();
+                        if(uploadJson.success) {
+                            fileUrl = uploadJson.url;
+                        } else throw new Error(uploadJson.message || 'Unknown error from GAS upload');
+                    } catch(err) {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-save"></i> Buat & Simpan Nomor';
+                        return showNotification('Gagal upload file: ' + err.message, 'error');
+                    }
+                }
+
                 const data = {
-                    nomorSurat: `SURAT-${genNomor}`,
+                    nomorSurat: genNomor, // Storing final raw ID directly as genNomor without prefixing SURAT
                     date: dateInput.value,
                     perihal: document.getElementById('surat-perihal').value,
                     tujuan: document.getElementById('surat-tujuan').value,
                     type: typeInput.value,
+                    fileUrl: fileUrl,
+                    createdBy: localStorage.getItem('loggedInUser'),
                     createdAt: new Date().toISOString()
                 };
 
-                const btn = document.getElementById('surat-save-btn');
                 btn.disabled = true;
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
                 
@@ -1699,7 +1807,7 @@
                     const res = await fetch('/api/simpanSurat', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ username: localStorage.getItem('loggedInUser'), data })
+                        body: JSON.stringify({ username: 'GLOBAL', data })
                     });
                     
                     if (res.ok) {
@@ -1707,9 +1815,7 @@
                         formObj.reset();
                         flatpickr(dateInput, { dateFormat: "d/m/Y", locale: "id", defaultDate: "today", disableMobile: "true" });
                         fetchAllSurat();
-                    } else {
-                        showNotification('Gagal menyimpan nomor surat', 'error');
-                    }
+                    } else showNotification('Gagal menyimpan nomor surat', 'error');
                 } catch(err) {
                     showNotification('Error menyimpan surat', 'error');
                 } finally {

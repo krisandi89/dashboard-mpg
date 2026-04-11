@@ -28,6 +28,7 @@ writeAPI('api/ambilSurat.js', 'GET', `{ action: 'ambil', type: 'Surat', username
 writeAPI('api/simpanPPU.js', 'POST', `{ action: 'simpan', type: 'PPU', username: req.body.username, id: req.body.data?.projectInfo?.ppuNumber || req.body.data?.nomorPPU || req.body.data?.nomor || req.body.data?.id || req.body.data?.nomorSurat, data: req.body.data }`);
 writeAPI('api/simpanRekap.js', 'POST', `{ action: 'simpan', type: 'Rekap', username: req.body.username, id: req.body.data?.projectInfo?.rekapNumber || req.body.data?.nomorRekap || req.body.data?.nomor || req.body.data?.id || req.body.data?.nomorSurat, data: req.body.data }`);
 writeAPI('api/simpanSurat.js', 'POST', `{ action: 'simpan', type: 'Surat', username: req.body.username, id: req.body.data?.nomorSurat || req.body.data?.nomor || req.body.data?.id, data: req.body.data }`);
+writeAPI('api/uploadSurat.js', 'POST', `{ action: 'upload', filename: req.body.filename, mimeType: req.body.mimeType, base64Data: req.body.base64Data }`);
 
 // Write hapus
 writeAPI('api/hapus.js', 'DELETE', `{ action: 'hapus', type: req.body.type || req.query.type, username: req.body.username || req.query.username, id: req.body.number || req.query.number }`);

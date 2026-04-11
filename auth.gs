@@ -18,6 +18,7 @@ function doPost(e) {
   if (action === 'ambil') return processAmbil(type, username, id, output);
   if (action === 'ambilSemua') return processAmbilSemua(type, username, output);
   if (action === 'hapus') return processHapus(type, username, id, output);
+  if (action === 'upload') return processUpload(req.filename, req.mimeType, req.base64Data, output);
 
   return output.setContent(JSON.stringify({ success: false, message: 'Unknown action' }));
 }
@@ -143,6 +144,21 @@ function processHapus(type, username, id, output) {
     } else {
         return output.setContent(JSON.stringify({ success: false, message: 'Data tidak ditemukan.' }));
     }
+  } catch(e) {
+    return output.setContent(JSON.stringify({ success: false, message: e.toString() }));
+  }
+}
+
+function processUpload(filename, mimeType, base64Data, output) {
+  if (!filename || !mimeType || !base64Data) {
+    return output.setContent(JSON.stringify({ success: false, message: 'Data file tidak lengkap' }));
+  }
+  try {
+    const dataBlob = Utilities.base64Decode(base64Data);
+    const blob = Utilities.newBlob(dataBlob, mimeType, filename);
+    const file = DriveApp.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    return output.setContent(JSON.stringify({ success: true, url: file.getUrl() }));
   } catch(e) {
     return output.setContent(JSON.stringify({ success: false, message: e.toString() }));
   }
