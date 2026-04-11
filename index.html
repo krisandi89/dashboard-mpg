@@ -1704,6 +1704,7 @@
                             <td style="padding: 12px;">${s.tujuan}</td>
                             <td style="padding: 12px; text-align: center;">${s.fileUrl ? `<a href="${s.fileUrl}" target="_blank" class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;"><i class="fas fa-external-link-alt"></i> Lihat</a>` : '-'}</td>
                             <td style="padding: 12px; text-align: center; white-space: nowrap;">
+                                <button onclick="window.editSuratData('${s.nomorSurat}')" title="Edit Data" style="color: var(--dark); background: none; border: none; cursor: pointer; margin-right: 8px;"><i class="fas fa-edit"></i></button>
                                 <button onclick="window.editSuratFile('${s.nomorSurat}')" title="Upload File Susulan" style="color: var(--primary); background: none; border: none; cursor: pointer; margin-right: 8px;"><i class="fas fa-upload"></i></button>
                                 <button onclick="window.deleteSurat('${s.nomorSurat}')" title="Hapus" style="color: var(--danger); background: none; border: none; cursor: pointer;"><i class="fas fa-trash-alt"></i></button>
                             </td>
@@ -1757,6 +1758,75 @@
                         showNotification('Gagal hapus surat', 'error');
                     }
                 });
+            };
+
+            window.editSuratData = (nomorSurat) => {
+                const sObj = allSuratData.find(d => d.nomorSurat === nomorSurat);
+                if(!sObj) return;
+
+                const html = `
+                    <div style="margin-bottom: 15px; display: grid; gap: 10px;">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 mb-1">Tanggal</label>
+                            <input type="text" id="surat-edit-data-date" class="form-input" value="${sObj.date}" placeholder="dd/mm/yyyy" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 mb-1">Perihal</label>
+                            <input type="text" id="surat-edit-data-perihal" class="form-input" value="${sObj.perihal}" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 mb-1">Tujuan / Kepada</label>
+                            <input type="text" id="surat-edit-data-tujuan" class="form-input" value="${sObj.tujuan}" required>
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content: flex-end; gap: 8px;">
+                        <button onclick="hideModal()" class="btn btn-secondary">Batal</button>
+                        <button onclick="window.saveSuratEditData('${nomorSurat}')" id="surat-edit-data-save-btn" class="btn btn-primary">Simpan Perubahan</button>
+                    </div>
+                `;
+                showModal('Edit Surat: ' + nomorSurat, html, 'alert', null);
+                setTimeout(() => {
+                    flatpickr(document.getElementById('surat-edit-data-date'), { dateFormat: "d/m/Y", locale: "id", disableMobile: "true" });
+                }, 100);
+            };
+
+            window.saveSuratEditData = async (nomorSurat) => {
+                const sObj = allSuratData.find(d => d.nomorSurat === nomorSurat);
+                if(!sObj) return hideModal();
+
+                const newDate = document.getElementById('surat-edit-data-date').value;
+                const newPerihal = document.getElementById('surat-edit-data-perihal').value;
+                const newTujuan = document.getElementById('surat-edit-data-tujuan').value;
+
+                if (!newDate || !newPerihal || !newTujuan) return showNotification('Harap isi semua kolom.', 'warning');
+
+                const btn = document.getElementById('surat-edit-data-save-btn');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+
+                sObj.date = newDate;
+                sObj.perihal = newPerihal;
+                sObj.tujuan = newTujuan;
+
+                try {
+                    const res = await fetch('/api/simpanSurat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: 'GLOBAL', data: sObj })
+                    });
+                    
+                    if(res.ok) {
+                        showNotification('Data surat berhasil diupdate!', 'success');
+                        hideModal();
+                        fetchAllSurat();
+                    } else {
+                        throw new Error('Gagal update data surat ke backend');
+                    }
+                } catch(err) {
+                    btn.disabled = false;
+                    btn.innerHTML = 'Simpan Perubahan';
+                    showNotification('Gagal: ' + err.message, 'error');
+                }
             };
 
             window.editSuratFile = (nomorSurat) => {
