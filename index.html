@@ -473,7 +473,9 @@
             return `${day}/${month}/${year}`;
         };
         const parseDateFromInput = (str) => {
-            if (!str || !/^\d{2}\/\d{2}\/\d{4}$/.test(str)) return null;
+            if (!str) return null;
+            if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+            if (!/^\d{2}\/\d{2}\/\d{4}$/.test(str)) return null;
             const [day, month, year] = str.split('/').map(Number);
             const date = new Date(year, month - 1, day);
             if (date.getFullYear() !== year || date.getMonth() + 1 !== month || date.getDate() !== day) return null;
@@ -1135,7 +1137,7 @@
                 reportWindow.document.write(reportHTML);
                 reportWindow.document.close();
             });
-            const flatpickrConfig = { dateFormat: "d/m/Y", locale: "id" };
+            const flatpickrConfig = { dateFormat: "d/m/Y", locale: "id", disableMobile: "true" };
             flatpickr(`#${prefix}proposal-date`, flatpickrConfig);
             flatpickr(`#${prefix}project-date`, flatpickrConfig);
             flatpickr(`#${prefix}supervisi-start-date`, flatpickrConfig);
@@ -1491,7 +1493,7 @@
                 reportWindow.document.write(reportHTML);
                 reportWindow.document.close();
             });
-            const flatpickrConfig = { dateFormat: "d/m/Y", locale: "id" };
+            const flatpickrConfig = { dateFormat: "d/m/Y", locale: "id", disableMobile: "true" };
             flatpickr(`#${prefix}budget-date`, flatpickrConfig);
             flatpickr(`#${prefix}standard-date`, flatpickrConfig);
             flatpickr(`#${prefix}supervisi-start-date`, flatpickrConfig);
@@ -1573,7 +1575,7 @@
             const formObj = document.getElementById('surat-form');
             const searchInput = document.getElementById('surat-list-search');
             
-            flatpickr(dateInput, { dateFormat: "d/m/Y", locale: "id", defaultDate: "today" });
+            flatpickr(dateInput, { dateFormat: "d/m/Y", locale: "id", defaultDate: "today", disableMobile: "true" });
             
             let allSuratData = [];
 
@@ -1703,7 +1705,7 @@
                     if (res.ok) {
                         showNotification('Nomor surat berhasil dibuat!', 'success');
                         formObj.reset();
-                        flatpickr(dateInput, { dateFormat: "d/m/Y", locale: "id", defaultDate: "today" });
+                        flatpickr(dateInput, { dateFormat: "d/m/Y", locale: "id", defaultDate: "today", disableMobile: "true" });
                         fetchAllSurat();
                     } else {
                         showNotification('Gagal menyimpan nomor surat', 'error');
