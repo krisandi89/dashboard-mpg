@@ -1,4 +1,4 @@
-import { kv } from '@vercel/kv';
+import { proxyToGas, GAS_WEBAPP_URL } from './_gasProxy.js';
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -11,18 +11,31 @@ export default async function handler(req, res) {
             return res.status(400).json({ success: false, message: 'Invalid data provided' });
         }
 
-        const key = `${username}-${type}-${number}`;
-        let existingData = await kv.get(key);
-
-        if (!existingData) {
+        // 1. Fetch current data from GAS
+        const getPayload = { action: 'ambil', type: type, username: username, id: number };
+        const getRes = await fetch(GAS_WEBAPP_URL, {
+            method: 'POST',
+            body: JSON.stringify(getPayload)
+        });
+        const text = await getRes.text();
+        let getResult;
+        try { 
+            getResult = JSON.parse(text); 
+        } catch (e) { 
+            return res.status(500).json({ success: false, message: 'GAS Error: ' + text }); 
+        }
+        
+        if (!getResult.success || !getResult.data) {
             return res.status(404).json({ success: false, message: 'Data not found' });
         }
 
-        existingData.expenses = expenses;
+        // 2. Update expenses with new order
+        getResult.data.expenses = expenses;
 
-        await kv.set(key, existingData);
+        // 3. Save back to GAS
+        const savePayload = { action: 'simpan', type: type, username: username, id: number, data: getResult.data };
+        return proxyToGas(savePayload, res);
 
-        return res.status(200).json({ success: true, message: 'Urutan berhasil disimpan' });
     } catch (error) {
         console.error('Error saving order:', error);
         return res.status(500).json({ success: false, message: 'Failed to save order' });
